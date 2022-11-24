@@ -42,19 +42,20 @@ class _ListSongState extends State<ListSong> {
   }
 
   void listanIndex() async {
-    if (assetsAudioPlayer.isPlaying.value) {
-      assetsAudioPlayer.current.listen((event) {
-        setState(() {
-          if (event != null) this.index = event.index.toInt();
-        });
+    assetsAudioPlayer.current.listen((event) {
+      setState(() {
+        if (event != null) this.index = event.index.toInt();
+        assetsAudioPlayer.isPlaying.value;
       });
-    }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     int index1 = index;
     listanIndex();
+    final GroupButtonController controller = GroupButtonController();
+    controller.selectedIndexes.add(0);
     SongModel song = playList!.listSong[index1];
     return Stack(
       children: [
@@ -71,6 +72,7 @@ class _ListSongState extends State<ListSong> {
                   options: GroupButtonOptions(
                     spacing: 50,
                     selectedShadow: const [],
+                    selectedColor: Colors.black,
                     unselectedShadow: const [],
                     unselectedColor: Colors.grey[300],
                     unselectedTextStyle: TextStyle(
@@ -152,17 +154,14 @@ class _ListSongState extends State<ListSong> {
                         onTap: () {
                           setState(() {
                             this.index = index;
+                            this.isPlay = true;
                           });
                           Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (context) {
-                                return HomePage(
-                                  isWidget: true,
-                                  playList: playList,
-                                  index: index,
-                                  assetsAudioPlayer: assetsAudioPlayer,
-                                );
+                                return player(
+                                    playList, index, assetsAudioPlayer, true);
                               },
                             ),
                           );
@@ -187,20 +186,22 @@ class _ListSongState extends State<ListSong> {
           ),
         ),
         Miniplayer(
-          backgroundColor: Colors.yellow,
-          minHeight: !isPlay ? 50 : 700,
+          minHeight: 50,
           maxHeight: 700,
-          duration: assetsAudioPlayer.isPlaying.value
-              ? assetsAudioPlayer.current.value!.audio.duration
-              : new Duration(seconds: 0),
-          builder: (height, percentage) {
-            percentage = 100;
-            return height < 500
-                ? PlayerBar(context, assetsAudioPlayer, song)
-                : player(playList, index1, assetsAudioPlayer, isPlay);
+          builder: (heigt, percentage) {
+            return heigt < 500
+                ? PlayerBar(context, assetsAudioPlayer, song, isPlay)
+                : player(playList, index1, assetsAudioPlayer, false);
           },
         ),
       ],
     );
   }
+}
+
+double heigtValue(bool i) {
+  if (i == true)
+    return 50;
+  else
+    return 700;
 }

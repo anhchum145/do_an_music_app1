@@ -105,6 +105,26 @@ class _playerState extends State<player> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
+              Row(
+                children: [
+                  SizedBox(
+                    width: 20,
+                  ),
+                  isPlay
+                      ? GestureDetector(
+                          onTap: () {
+                            Navigator.pop(context);
+                          },
+                          child: Icon(
+                            Icons.arrow_back_outlined,
+                            color: Colors.white,
+                          ),
+                        )
+                      : SizedBox(
+                          width: 20,
+                        ),
+                ],
+              ),
               ClipRRect(
                 borderRadius: BorderRadius.circular(30),
                 child: Image.asset(
