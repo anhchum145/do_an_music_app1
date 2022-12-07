@@ -1,13 +1,21 @@
 import 'dart:io';
+import 'dart:math';
 
 import 'package:assets_audio_player/assets_audio_player.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:do_an_music_app1/model/getPlayList.dart';
 import 'package:do_an_music_app1/model/playListModle.dart';
+import 'package:do_an_music_app1/model/songModel.dart';
 import 'package:do_an_music_app1/repositories/music_repository.dart';
 import 'package:do_an_music_app1/repositories/readFromFirestore.dart';
+import 'package:do_an_music_app1/repositories/service.dart';
+import 'package:do_an_music_app1/repositories/write_db.dart';
 import 'package:do_an_music_app1/views/homeScreen.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_media_metadata/flutter_media_metadata.dart';
 import 'package:id3/id3.dart';
 
 Future<void> main() async {
@@ -17,26 +25,49 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   await FirebaseAppCheck.instance.activate(
-    webRecaptchaSiteKey:
-        'ca:97:81:12:ca:1b:bd:ca:fa:c2:31:b3:9a:23:dc:4d:a7:86:ef:f8:14:7c:4e:72:b9:80:77:85:af:ee:48:bb',
     androidDebugProvider: true,
   );
   final assetsAudioPlayer = AssetsAudioPlayer.withId("0");
-  final musicRepoo = new musicRepo("music");
-  // playListModle play =
-  //     new playListModle(name: "E3w58hxFYnh7NWBkJIF3", listSong: null);
+  // playListModle play = new playListModle(name: "ndv", listSong: []);
 
-  //ghiallsong
+  // //ghiallsong
+
+  //await metaDataUp();
+  //--upic
+  final storage = FirebaseStorage.instance.ref();
+  final storageFolder = storage.child("/pic/cover");
+  final listResult = await storageFolder.listAll();
+  final docr = await FirebaseFirestore.instance.collection("playlist").get();
+  final a = docr.docs;
+
+  var t = await readListAlbum();
+
+  print(t);
   // playListModle p;
-  // Future<playListModle> play =
-  //     musicRepoo.getPlayListFromFolder("music").then((value) {
+  // await readPlayListFromStore("trehot").then(
+  //   (value) async {
+  //     List<String> link = [];
+
+  //     for (var item in listResult.items) {
+  //       final linkSong = await item.getDownloadURL();
+  //       link.add(linkSong);
+  //     }
+  //     for (SongModel s in value.listSong) {
+  //       s.coverlink = link[Random().nextInt(15) + 1];
+  //       WriteSong(s);
+  //     }
+  //   },
+  // );
+  //--------------
+  // await getPlayListFromFolder("/music/nhactrehot").then((value) {
   //   for (SongModel s in value.listSong) {
   //     WriteSong(s);
   //   }
   //   return value;
   // });
-  // WriteDate(play);
-  runApp(MyApp(assetsAudioPlayer));
+  //await WritePlay();
+
+  runApp(MyApp(assetsAudioPlayer, a, 0));
 
   // await readPlayListFromStore("full").then((value) {
   //   return value;
@@ -44,14 +75,16 @@ Future<void> main() async {
 }
 
 class MyApp extends StatelessWidget {
-  MyApp(this.assetsAudioPlayer);
+  MyApp(this.assetsAudioPlayer, this.listAlbum, this.i);
   final AssetsAudioPlayer assetsAudioPlayer;
   var t = false;
+  final listAlbum;
+  final i;
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return FutureBuilder(
-      future: readPlayListFromStore("full"),
+      future: readPlayListFromStore(listAlbum[i].id),
       builder: (context, AsyncSnapshot<playListModle> snapshot) {
         if (snapshot.hasData) {
           return MaterialApp(
@@ -76,17 +109,6 @@ class MyApp extends StatelessWidget {
         }
       },
     );
-
-    // return MaterialApp(
-    //   title: 'Flutter Demo',
-    //   theme: ThemeData(brightness: Brightness.dark),
-    //   home: HomePage(
-    //     index: -1,
-    //     isWidget: true,
-    //     playList: play,
-    //     assetsAudioPlayer: assetsAudioPlayer,
-    //   ),
-    // );
   }
 }
 

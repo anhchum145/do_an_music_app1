@@ -2,7 +2,7 @@
     package="com.example.do_an_music_app1">
    <application
    android:requestLegacyExternalStorage="true"
-
+   android:usesCleartextTraffic="true"
         android:label="do_an_music_app1"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">

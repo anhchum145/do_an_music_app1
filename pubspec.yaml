@@ -48,9 +48,9 @@ dependencies:
   group_button: ^5.2.2
   miniplayer: ^1.0.1
   shared_preferences: ^2.0.15
-  downloads_path_provider_28: ^0.1.2
-  permission_handler: ^10.2.0
   dio: ^4.0.6
+  flutter_media_metadata: ^1.0.0
+  tiktoklikescroller: ^0.2.3
 
 dev_dependencies:
   flutter_test:

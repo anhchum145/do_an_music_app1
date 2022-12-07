@@ -4,8 +4,14 @@ import 'package:do_an_music_app1/model/songModel.dart';
 class playListModle {
   String name;
   List<SongModel> listSong;
+  String id;
+  String pic;
 
-  playListModle({required this.name, required this.listSong});
+  playListModle(
+      {required this.name,
+      required this.listSong,
+      required this.id,
+      required this.pic});
 
   // factory playListModle.fromFirestore(
   //   DocumentSnapshot<Map<String, dynamic>> snapshot,

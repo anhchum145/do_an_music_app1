@@ -1,10 +1,8 @@
-import 'dart:convert';
-import 'dart:io';
-
-import 'package:assets_audio_player/assets_audio_player.dart';
-import 'package:do_an_music_app1/Model/playListModle.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:do_an_music_app1/Model/songModel.dart';
+import 'package:do_an_music_app1/model/songModel.dart';
+import 'package:do_an_music_app1/model/songModel.dart';
+
+import '../model/playListModle.dart';
 
 // Future<void> WriteDate(playListModle play) async {
 //   final db = FirebaseFirestore.instance;
@@ -93,6 +91,19 @@ Future<void> WriteSong(SongModel song) async {
   await docRef.set(song);
 }
 
+Future<void> updatePicSong(SongModel song) async {
+  final db = FirebaseFirestore.instance;
+
+  final docRef = db
+      .collection("song")
+      .withConverter(
+        fromFirestore: SongModel.fromFirestore,
+        toFirestore: (SongModel song, options) => song.toFirestore(),
+      )
+      .doc(song.id);
+  await docRef.update(song.toFirestore());
+}
+
 Future<void> WritePlay() async {
   final db = FirebaseFirestore.instance;
   final a = new Map<String, String>();
@@ -100,12 +111,12 @@ Future<void> WritePlay() async {
   final song = await db.collection("song").get();
   song.docs.forEach(
     (element) => {
-      a.addAll({i.toString(): element.id}),
+      if (element.id.toString().contains("1670162"))
+        a.addAll({i.toString(): element.id}),
       i++
     },
   );
 
-  print("object");
-  final docRef = db.collection("playlist").doc("full");
+  final docRef = db.collection("playlist").doc("trehot");
   await docRef.set(a);
 }

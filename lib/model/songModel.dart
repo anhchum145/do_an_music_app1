@@ -10,13 +10,15 @@ class SongModel {
   String path;
   String name;
   String artist;
+  String coverlink;
 
   SongModel(
       {required this.id,
       required this.linkSong,
       required this.path,
       required this.artist,
-      required this.name});
+      required this.name,
+      required this.coverlink});
   factory SongModel.fromFirestore(
     DocumentSnapshot<Map<String, dynamic>> snapshot,
     SnapshotOptions? options,
@@ -27,16 +29,18 @@ class SongModel {
         linkSong: data?['linkSong'],
         path: data?['path'],
         artist: data?['artist'],
-        name: data?['name']);
+        name: data?['name'],
+        coverlink: data?['coverlink']);
   }
 
-  Map<String, Object?> toFirestore() {
+  Map<String, dynamic> toFirestore() {
     return {
       if (id != null) "id": id,
       if (linkSong != null) "linkSong": linkSong,
       if (path != null) "path": path,
       if (artist != null) "artist": artist,
       if (name != null) "name": name,
+      if (coverlink != null) "coverlink": coverlink
     };
   }
 }

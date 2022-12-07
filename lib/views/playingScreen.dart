@@ -90,7 +90,7 @@ class _playerState extends State<player> {
             constraints: BoxConstraints.expand(),
             decoration: BoxDecoration(
               image: DecorationImage(
-                image: AssetImage("assets/cover.jpg"),
+                image: NetworkImage(song.coverlink),
                 fit: BoxFit.cover,
               ),
             ),
@@ -127,9 +127,15 @@ class _playerState extends State<player> {
               ),
               ClipRRect(
                 borderRadius: BorderRadius.circular(30),
-                child: Image.asset(
-                  "assets/cover.jpg",
-                  width: 250.0,
+                child: Image.network(
+                  song.coverlink,
+                  width: 280,
+                  loadingBuilder: (context, child, loadingProgress) =>
+                      (loadingProgress == null)
+                          ? child
+                          : CircularProgressIndicator(),
+                  errorBuilder: (context, error, stackTrace) =>
+                      Image.asset("assets/cover.jpg"),
                 ),
               ),
               SizedBox(

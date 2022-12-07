@@ -3,7 +3,8 @@ import 'dart:io';
 import 'package:assets_audio_player/assets_audio_player.dart';
 
 List<String> getFullSong() {
-  Directory dir = Directory('/storage/151B-0F19/');
+  Directory dir = Directory(
+      '/storage/151B-0F19/Music/Nhung Bai Nhac Tre Hot Nhat Mot Thoi - Various Artists - Nhac.vn/');
   String mp3Path = dir.toString();
   List<FileSystemEntity> _files;
   List<String> files = [];
@@ -17,23 +18,4 @@ List<String> getFullSong() {
     }
   }
   return files;
-}
-
-AssetsAudioPlayer getFullPlayList(List<FileSystemEntity> files) {
-  AssetsAudioPlayer assetsAudioPlayer = new AssetsAudioPlayer();
-  String path = "";
-  List<String> _files = [];
-  for (FileSystemEntity f in files) {
-    path = f.toString().replaceAll("File: '", "");
-    path = path.replaceAll("'", "");
-    _files.add(path);
-  }
-  assetsAudioPlayer.open(
-      Playlist(audios: [
-        for (String f in _files) Audio.file(f),
-      ]),
-      loopMode: LoopMode.playlist //loop the full playlist
-      );
-  assetsAudioPlayer.stop();
-  return assetsAudioPlayer;
 }

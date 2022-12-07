@@ -5,7 +5,8 @@ import 'package:id3/id3.dart';
 
 List<String> getPlayListLocal() {
   List<String> playList = [];
-  Directory dir = Directory('/storage/emulated/0/');
+  Directory dir = Directory(
+      '/storage/151B-0F19/Music/Nhung Bai Nhac Tre Hot Nhat Mot Thoi - Various Artists - Nhac.vn');
   String mp3Path = dir.toString();
   List<FileSystemEntity> _files;
   List<FileSystemEntity> files = [];

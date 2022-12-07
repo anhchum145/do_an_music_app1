@@ -4,11 +4,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:do_an_music_app1/model/playListModle.dart';
 import '../model/songModel.dart';
 
-Future<playListModle> readPlayListFromStore(String name) async {
-  playListModle play = new playListModle(name: name, listSong: []);
+Future<playListModle> readPlayListFromStore(String id) async {
+  playListModle play =
+      new playListModle(name: '', listSong: [], id: id, pic: "pic");
   final Future<playListModle> playFu;
   final db = FirebaseFirestore.instance;
-  final docRef = db.collection("playlist").doc(name);
+  final docRef = db.collection("playlist").doc(id);
+  final docInfo = await docRef.collection("info").doc("info").get();
+  final infodata = docInfo.data() as Map<String, dynamic>;
   var map = new Map<String, dynamic>();
   await docRef.get().then(
     (DocumentSnapshot doc) {
@@ -19,8 +22,12 @@ Future<playListModle> readPlayListFromStore(String name) async {
   );
   final List<SongModel> l = [];
   String list = jsonEncode(map);
+  play.name = infodata["name"];
+  play.pic = infodata["pic"];
   print(list);
   await Future.forEach(map.entries, (MapEntry m) async {
+    var b = !m.key.toString().contains("name");
+
     await readSongFromStore(m.value.toString())
         .then((value) => play.listSong.add(value));
   });
@@ -36,8 +43,8 @@ addv(playListModle play, v) {
 }
 
 Future<SongModel> readSongFromStore(String id) async {
-  SongModel song;
   final db = FirebaseFirestore.instance;
+  String a;
   final docRef = db.collection("song").doc(id);
   var map = new Map<String, dynamic>();
   await docRef.get().then(
@@ -52,5 +59,6 @@ Future<SongModel> readSongFromStore(String id) async {
       linkSong: map['linkSong'],
       path: map['path'],
       artist: map['artist'],
-      name: map['name']);
+      name: map['name'],
+      coverlink: map['coverlink']);
 }

@@ -17,15 +17,20 @@ Widget PlayerBar(
             width: 10,
           ),
           // Song cover
-          // Center(
-          //   child: Container(
-          //     child: Image.asset(
-          //       "assets/cover.jpg",
-          //       width: 100,
-
-          //     ),
-          //   ),
-          // ),
+          Center(
+            child: Container(
+              child: Image.network(
+                song.coverlink,
+                width: 40,
+                loadingBuilder: (context, child, loadingProgress) =>
+                    (loadingProgress == null)
+                        ? child
+                        : CircularProgressIndicator(),
+                errorBuilder: (context, error, stackTrace) =>
+                    Image.asset("assets/cover.jpg"),
+              ),
+            ),
+          ),
           // Padding
           SizedBox(width: 15),
 
@@ -37,10 +42,10 @@ Widget PlayerBar(
               Text(
                 song.name != null && isPlay
                     ? song.name.toString().length > 21
-                        ? "${song.name.toString().substring(0, 17)}..."
+                        ? "${song.name.toString().substring(0, 15)}..."
                         : song.name.toString()
                     : "Mời chọn bài hát",
-                style: Theme.of(context).textTheme.headline6,
+                style: Theme.of(context).textTheme.bodyText1,
               ),
               // Artist
               // Text(
