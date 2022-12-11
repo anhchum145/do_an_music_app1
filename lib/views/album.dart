@@ -1,22 +1,31 @@
 import 'package:do_an_music_app1/main.dart';
+import 'package:do_an_music_app1/repositories/StreamAlbum.dart';
+import 'package:do_an_music_app1/repositories/service.dart';
+import 'package:do_an_music_app1/views/appbar.dart';
+import 'package:do_an_music_app1/views/menu.dart';
 import 'package:flutter/material.dart';
 
-class AlbumScreen extends StatelessWidget {
-  AlbumScreen(this.list, {super.key});
-  List<Map<String, String>> list;
-  @override
-  Widget build(BuildContext context) {
-    return GridView.count(
-      crossAxisCount: 2,
-      padding: const EdgeInsets.all(16.0),
-      childAspectRatio: 8.0 / 9.0,
-      // TODO: Build a grid of cards (102)
-      children: _buildGridCards(list.length, list),
-    );
-  }
-}
+// class AlbumScreen extends StatelessWidget {
+//   AlbumScreen(this.list, this.context1, {super.key});
+//   List<Map<String, String>> list;
+//   BuildContext context1;
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold(
+//       extendBodyBehindAppBar: true,
+//       appBar: appBar("Album"),
+//       body: Column(
+//         mainAxisAlignment: MainAxisAlignment.start,
+//         children: [
+//           menu(context1),
+//         ],
+//       ),
+//     );
+//   }
+// }
 
-List<Card> _buildGridCards(int count, List<Map<String, String>> list) {
+List<Card> _buildGridCards(int count, List<Map<String, String>> list,
+    BuildContext context1, MyStream stream) {
   List<Card> cards = List.generate(
     count,
     (int index) {
@@ -43,7 +52,7 @@ List<Card> _buildGridCards(int count, List<Map<String, String>> list) {
                             ? child
                             : CircularProgressIndicator(strokeWidth: 1.0),
                     errorBuilder: (context, error, stackTrace) =>
-                        Image.asset("assets/cover.jpg"),
+                        Image.asset("assets/cover.png"),
                   ),
                 ),
               ),
@@ -59,11 +68,33 @@ List<Card> _buildGridCards(int count, List<Map<String, String>> list) {
             ],
           ),
           onTap: () {
-            // main();
+            stream.increment(list[index]["id"].toString());
           },
         ),
       );
     },
   );
   return cards;
+}
+
+Widget AlbumWidget(
+    List<Map<String, String>> list, BuildContext context1, MyStream stream) {
+  return GridView.count(
+    scrollDirection: Axis.vertical,
+    crossAxisCount: 2,
+    padding: const EdgeInsets.all(16.0),
+    childAspectRatio: 8.0 / 9.0,
+    shrinkWrap: true,
+    // TODO: Build a grid of cards (102)
+    children: _buildGridCards(list.length, list, context1, stream),
+  );
+}
+
+String s = '';
+setAlbum(String album) {
+  s = album;
+}
+
+String getAlbum() {
+  return s;
 }

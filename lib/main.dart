@@ -1,22 +1,30 @@
 import 'dart:io';
+import 'dart:isolate';
 import 'dart:math';
+import 'dart:ui';
 
 import 'package:assets_audio_player/assets_audio_player.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:do_an_music_app1/model/getPlayList.dart';
 import 'package:do_an_music_app1/model/playListModle.dart';
 import 'package:do_an_music_app1/model/songModel.dart';
+import 'package:do_an_music_app1/repositories/download.dart';
 import 'package:do_an_music_app1/repositories/music_repository.dart';
 import 'package:do_an_music_app1/repositories/readFromFirestore.dart';
 import 'package:do_an_music_app1/repositories/service.dart';
 import 'package:do_an_music_app1/repositories/write_db.dart';
+import 'package:do_an_music_app1/views/appbar.dart';
 import 'package:do_an_music_app1/views/homeScreen.dart';
+import 'package:do_an_music_app1/views/player_bar.dart';
+import 'package:do_an_music_app1/views/song2.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:flutter_media_metadata/flutter_media_metadata.dart';
 import 'package:id3/id3.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 Future<void> main() async {
   // await Firebase.initializeApp(
@@ -31,18 +39,26 @@ Future<void> main() async {
   // playListModle play = new playListModle(name: "ndv", listSong: []);
 
   // //ghiallsong
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // // Plugin must be initialized before using
+  await FlutterDownloader.initialize(
+      debug:
+          true, // optional: set to false to disable printing logs to console (default: true)
+      ignoreSsl:
+          true // option: set to false to disable working with http links (default: false)
+      );
 
   //await metaDataUp();
   //--upic
-  final storage = FirebaseStorage.instance.ref();
-  final storageFolder = storage.child("/pic/cover");
-  final listResult = await storageFolder.listAll();
-  final docr = await FirebaseFirestore.instance.collection("playlist").get();
-  final a = docr.docs;
+  // final storage = FirebaseStorage.instance.ref();
+  // final storageFolder = storage.child("/pic/cover");
+  // final listResult = await storageFolder.listAll();
+  var status = await Permission.manageExternalStorage.status;
+  if (status.isDenied) {
+    print("Không có quyênnnnnnnnnnnnnnnnnnnn");
+  }
 
-  var t = await readListAlbum();
-
-  print(t);
   // playListModle p;
   // await readPlayListFromStore("trehot").then(
   //   (value) async {
@@ -66,8 +82,9 @@ Future<void> main() async {
   //   return value;
   // });
   //await WritePlay();
+  // await getPlayListLocal().then((value) => print(value));
 
-  runApp(MyApp(assetsAudioPlayer, a, 0));
+  runApp(MyApp(assetsAudioPlayer));
 
   // await readPlayListFromStore("full").then((value) {
   //   return value;
@@ -75,40 +92,16 @@ Future<void> main() async {
 }
 
 class MyApp extends StatelessWidget {
-  MyApp(this.assetsAudioPlayer, this.listAlbum, this.i);
+  MyApp(this.assetsAudioPlayer);
   final AssetsAudioPlayer assetsAudioPlayer;
-  var t = false;
-  final listAlbum;
-  final i;
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-      future: readPlayListFromStore(listAlbum[i].id),
-      builder: (context, AsyncSnapshot<playListModle> snapshot) {
-        if (snapshot.hasData) {
-          return MaterialApp(
-            title: 'Flutter Demo',
-            theme: ThemeData(brightness: Brightness.dark),
-            home: HomePage(
-              index: 0,
-              isWidget: false,
-              playList: snapshot.data,
-              assetsAudioPlayer: assetsAudioPlayer,
-            ),
-          );
-        } else {
-          return MaterialApp(
-            home: Center(
-              child: CircularProgressIndicator(
-                backgroundColor: Colors.cyanAccent,
-                valueColor: new AlwaysStoppedAnimation<Color>(Colors.red),
-              ),
-            ),
-          );
-        }
-      },
+    return MaterialApp(
+      theme: ThemeData(brightness: Brightness.dark),
+      home: ListSong(assetsAudioPlayer),
     );
+    //HomePage(
+    //mode: false, index: 0, assetsAudioPlayer: assetsAudioPlayer);
   }
 }
 
@@ -120,18 +113,18 @@ void fileToList(_files, files) {
   }
 }
 
-Map<String, dynamic>? readMata(String file) {
-  List<int> mp3Bytes = File(file).readAsBytesSync();
-  MP3Instance mp3instance = new MP3Instance(mp3Bytes);
+// Map<String, dynamic>? readMata(String file) {
+//   List<int> mp3Bytes = File(file).readAsBytesSync();
+//   MP3Instance mp3instance = new MP3Instance(mp3Bytes);
 
-  /// parseTagsSync() returns
-  // 'true' if successfully parsed
-  // 'false' if was unable to recognize tag so can't be parsed
-  Map<String, dynamic>? meta = Map();
-  if (mp3instance.parseTagsSync()) {
-    print(mp3instance.getMetaTags());
-    meta = mp3instance.getMetaTags();
-    return meta;
-  }
-  return null;
-}
+//   /// parseTagsSync() returns
+//   // 'true' if successfully parsed
+//   // 'false' if was unable to recognize tag so can't be parsed
+//   Map<String, dynamic>? meta = Map();
+//   if (mp3instance.parseTagsSync()) {
+//     print(mp3instance.getMetaTags());
+//     meta = mp3instance.getMetaTags();
+//     return meta;
+//   }
+//   return null;
+// }

@@ -3,83 +3,52 @@ import 'dart:ui';
 import 'package:assets_audio_player/assets_audio_player.dart';
 import 'package:do_an_music_app1/model/playListModle.dart';
 import 'package:do_an_music_app1/model/songModel.dart';
-import 'package:do_an_music_app1/repositories/music_repository.dart';
-import 'package:do_an_music_app1/views/homeScreen.dart';
-
 import 'package:flutter/material.dart';
 
-class player extends StatefulWidget {
-  player(this.playList, this.index, this.assetsAudioPlayer, this.isPlay);
+import '../repositories/music_repository.dart';
+
+class player extends StatelessWidget {
+  player(
+      this.playList, this.index, this.assetsAudioPlayer, this.isPlay, this.call,
+      {super.key});
   playListModle? playList;
   bool isPlay;
   int index;
-  // bool isPlay;
-  final AssetsAudioPlayer assetsAudioPlayer;
-  @override
-  State<player> createState() =>
-      _playerState(playList, index, assetsAudioPlayer, isPlay);
-}
-
-class _playerState extends State<player> {
-  _playerState(this.playList, this.index, this.assetsAudioPlayer, this.isPlay);
-  playListModle? playList;
+  bool call;
   AssetsAudioPlayer assetsAudioPlayer;
-  bool isPlay;
   Duration? duration = Duration(seconds: 0);
   Duration? duration1 = Duration(seconds: 0);
-  int index;
   int mui = 0;
   double sec = 0;
-  @override
-  void initState() {
-    if (isPlay) {
-      if (this.assetsAudioPlayer.id != "0") {
-        this.assetsAudioPlayer.dispose();
-        this.assetsAudioPlayer = new AssetsAudioPlayer.withId("0");
+  ValueNotifier<double> valueNotifierSlider = ValueNotifier(0);
+
+  void listenSlider() async {
+    assetsAudioPlayer.currentPosition.listen(
+      (playingAudio) {
+        duration = assetsAudioPlayer.current.value!.audio.duration;
+        valueNotifierSlider.value = playingAudio.inSeconds.toDouble();
+        mui = playingAudio.inMinutes.toInt();
+        sec = playingAudio.inSeconds.toDouble();
+      },
+    );
+  }
+
+  void ini() {
+    if (call) {
+      if (assetsAudioPlayer.id != "0") {
+        assetsAudioPlayer.dispose();
+        assetsAudioPlayer = new AssetsAudioPlayer.withId("0");
       }
       if (assetsAudioPlayer.playlist == null) {
-        getAPlayList(playList!, assetsAudioPlayer);
+        getAPlayList(playList!.mode, playList!, assetsAudioPlayer);
       }
       assetsAudioPlayer.playlistPlayAtIndex(index);
     }
   }
 
-  // void getDuration() {
-  //   if (assetsAudioPlayer.isPlaying.value) {
-  //     duration = assetsAudioPlayer.current.value?.audio.duration;
-  //   } else
-  //     duration = Duration(seconds: 0);
-  // }
-
-  void listenSlider() async {
-    assetsAudioPlayer.currentPosition.listen(
-      (playingAudio) {
-        setState(() {
-          mui = playingAudio.inMinutes.toInt();
-          sec = playingAudio.inSeconds.toDouble();
-        });
-      },
-    );
-  }
-
-  void listanIndex() async {
-    if (assetsAudioPlayer.isPlaying.value) {
-      assetsAudioPlayer.current.listen((event) {
-        setState(() {
-          duration = assetsAudioPlayer.current.value!.audio.duration;
-          this.index = event!.index.toInt();
-        });
-      });
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    // final SongModel song = playList.listSong![index];
-    Duration? duration1 = Duration(seconds: 0);
-    // getDuration();
-    listanIndex();
-
+    ini();
     listenSlider();
     SongModel song = playList!.listSong[index];
     return Scaffold(
@@ -87,12 +56,17 @@ class _playerState extends State<player> {
         fit: StackFit.expand,
         children: [
           Container(
-            constraints: BoxConstraints.expand(),
+            constraints: const BoxConstraints.expand(),
             decoration: BoxDecoration(
-              image: DecorationImage(
-                image: NetworkImage(song.coverlink),
-                fit: BoxFit.cover,
-              ),
+              image: !playList!.mode
+                  ? DecorationImage(
+                      image: NetworkImage(song.coverlink),
+                      fit: BoxFit.cover,
+                    )
+                  : DecorationImage(
+                      image: const AssetImage("assets/cover.png"),
+                      fit: BoxFit.cover,
+                    ),
             ),
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 28, sigmaY: 28),
@@ -110,7 +84,7 @@ class _playerState extends State<player> {
                   SizedBox(
                     width: 20,
                   ),
-                  isPlay
+                  call
                       ? GestureDetector(
                           onTap: () {
                             Navigator.pop(context);
@@ -127,16 +101,24 @@ class _playerState extends State<player> {
               ),
               ClipRRect(
                 borderRadius: BorderRadius.circular(30),
-                child: Image.network(
-                  song.coverlink,
-                  width: 280,
-                  loadingBuilder: (context, child, loadingProgress) =>
-                      (loadingProgress == null)
-                          ? child
-                          : CircularProgressIndicator(),
-                  errorBuilder: (context, error, stackTrace) =>
-                      Image.asset("assets/cover.jpg"),
-                ),
+                child: !playList!.mode
+                    ? Image.network(
+                        song.coverlink,
+                        width: 280,
+                        loadingBuilder: (context, child, loadingProgress) =>
+                            (loadingProgress == null)
+                                ? child
+                                : CircularProgressIndicator(),
+                        errorBuilder: (context, error, stackTrace) =>
+                            Image.asset(
+                          "assets/cover.png",
+                          width: 280,
+                        ),
+                      )
+                    : Image.asset(
+                        "assets/cover.png",
+                        width: 280,
+                      ),
               ),
               SizedBox(
                 height: 20,
@@ -157,35 +139,47 @@ class _playerState extends State<player> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(
-                    "${mui.floor().toString().padLeft(2, "0")}:${(sec % 60).floor().toString().padLeft(2, "0")}",
-                    style: TextStyle(
-                      color: Colors.white,
-                    ),
-                  ),
-                  Slider.adaptive(
-                    min: 0.0,
-                    max:
-                        duration == null ? 0.0 : duration!.inSeconds.toDouble(),
-                    value: sec,
-                    onChanged: (value) {
-                      setState(
-                        () {
-                          assetsAudioPlayer
-                              .seekBy(new Duration(seconds: value.toInt()));
-                          assetsAudioPlayer.play();
-                        },
+                  ValueListenableBuilder(
+                    valueListenable: valueNotifierSlider,
+                    builder:
+                        (BuildContext context, dynamic value, Widget? child) {
+                      return Text(
+                        "${mui.floor().toString().padLeft(2, "0")}:${(sec % 60).floor().toString().padLeft(2, "0")}",
+                        style: TextStyle(
+                          color: Colors.white,
+                        ),
                       );
                     },
-                    activeColor: Colors.white,
                   ),
-                  Text(
-                    assetsAudioPlayer.isPlaying.value
-                        ? "${duration?.inMinutes.floor().toString().padLeft(2, "0")}:${(duration!.inSeconds % 60).floor().toString().padLeft(2, "0")}"
-                        : "00:00",
-                    style: TextStyle(
-                      color: Colors.white,
-                    ),
+                  ValueListenableBuilder(
+                    valueListenable: valueNotifierSlider,
+                    builder: (context, value, child) {
+                      return Slider.adaptive(
+                        min: 0.0,
+                        max: duration == null
+                            ? 0.0
+                            : duration!.inSeconds.toDouble(),
+                        value: sec,
+                        onChanged: (value) {
+                          assetsAudioPlayer
+                              .seekBy(Duration(seconds: value.toInt()));
+                          assetsAudioPlayer.play();
+                        },
+                        activeColor: Colors.white,
+                      );
+                    },
+                  ),
+                  ValueListenableBuilder(
+                    valueListenable: valueNotifierSlider,
+                    builder:
+                        (BuildContext context, dynamic value, Widget? child) {
+                      return Text(
+                        "${duration!.inMinutes.floor().toString().padLeft(2, "0")}:${(duration!.inSeconds % 60).floor().toString().padLeft(2, "0")}",
+                        style: TextStyle(
+                          color: Colors.white,
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),
@@ -199,11 +193,7 @@ class _playerState extends State<player> {
                     children: [
                       GestureDetector(
                         onTap: () {
-                          setState(
-                            () {
-                              assetsAudioPlayer.previous();
-                            },
-                          );
+                          assetsAudioPlayer.previous();
                         },
                         child: Icon(
                           Icons.skip_previous,
@@ -225,18 +215,17 @@ class _playerState extends State<player> {
                         ),
                         child: InkWell(
                           onTap: () {
-                            duration1 = duration;
-
-                            setState(() {
-                              assetsAudioPlayer.playOrPause();
-                            });
+                            assetsAudioPlayer.playOrPause();
                           },
                           child: Center(
-                            child: Icon(
-                              assetsAudioPlayer.isPlaying.value
-                                  ? Icons.pause
-                                  : Icons.play_arrow,
-                              color: Colors.white,
+                            child: ValueListenableBuilder(
+                              valueListenable: valueNotifierSlider,
+                              builder: (context, value, child) => Icon(
+                                assetsAudioPlayer.isPlaying.value
+                                    ? Icons.pause
+                                    : Icons.play_arrow,
+                                color: Colors.white,
+                              ),
                             ),
                           ),
                         ),
@@ -246,11 +235,7 @@ class _playerState extends State<player> {
                       ),
                       GestureDetector(
                         onTap: () {
-                          setState(
-                            () {
-                              assetsAudioPlayer.next();
-                            },
-                          );
+                          assetsAudioPlayer.next();
                         },
                         child: Icon(
                           Icons.skip_next,
@@ -266,11 +251,5 @@ class _playerState extends State<player> {
         ],
       ),
     );
-  }
-
-  @override
-  void setState(VoidCallback fn) {
-    if (!mounted) return;
-    super.setState(fn);
   }
 }

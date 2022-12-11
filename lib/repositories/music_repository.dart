@@ -10,13 +10,13 @@ Future<playListModle> getPlayListFromFolder(String folder) async {
   final storage = FirebaseStorage.instance.ref();
 
   final List<SongModel> list = [];
-  final playListModle playList =
-      playListModle(name: folder, listSong: list, id: folder, pic: "pic");
+  final playListModle playList = playListModle(
+      name: folder, listSong: list, id: folder, pic: "pic", mode: true);
   final storageFolder = storage.child(folder);
   final listResult = await storageFolder.listAll();
   for (var item in listResult.items) {
     final meta = await item.getMetadata();
-    final linkSong = await item.getDownloadURL();
+    String linkSong = await item.getDownloadURL();
     final now = DateTime.now();
     // final songMap = new Map();
     // songMap["id"] = now.microsecondsSinceEpoch.toString();
@@ -39,10 +39,16 @@ Future<playListModle> getPlayListFromFolder(String folder) async {
   return playList;
 }
 
-bool getAPlayList(playListModle play, AssetsAudioPlayer assetsAudioPlayer) {
+bool getAPlayList(
+    bool mode, playListModle play, AssetsAudioPlayer assetsAudioPlayer) {
   List<Audio> paths = [];
+
   for (SongModel s in play.listSong) {
-    paths.add(Audio.network(s.linkSong));
+    if (mode) {
+      paths.add(Audio.file(s.path));
+    } else {
+      paths.add(Audio.network(s.linkSong));
+    }
   }
   assetsAudioPlayer.open(
     Playlist(audios: paths),

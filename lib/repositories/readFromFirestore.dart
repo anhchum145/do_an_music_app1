@@ -5,10 +5,12 @@ import 'package:do_an_music_app1/model/playListModle.dart';
 import '../model/songModel.dart';
 
 Future<playListModle> readPlayListFromStore(String id) async {
-  playListModle play =
-      new playListModle(name: '', listSong: [], id: id, pic: "pic");
+  playListModle play = new playListModle(
+      name: '', listSong: [], id: id, pic: "pic", mode: false);
   final Future<playListModle> playFu;
   final db = FirebaseFirestore.instance;
+  db.settings = const Settings(persistenceEnabled: true);
+
   final docRef = db.collection("playlist").doc(id);
   final docInfo = await docRef.collection("info").doc("info").get();
   final infodata = docInfo.data() as Map<String, dynamic>;

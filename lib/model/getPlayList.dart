@@ -2,22 +2,30 @@ import 'dart:io';
 
 import 'package:assets_audio_player/assets_audio_player.dart';
 import 'package:id3/id3.dart';
+import 'package:path_provider/path_provider.dart';
 
-List<String> getPlayListLocal() {
+Future<List<String>> getPlayListLocal() async {
   List<String> playList = [];
-  Directory dir = Directory(
-      '/storage/151B-0F19/Music/Nhung Bai Nhac Tre Hot Nhat Mot Thoi - Various Artists - Nhac.vn');
+  final appDocDir = await getExternalStorageDirectory();
+  final filePathMp3 = "${appDocDir!.path}";
+
+  Directory dir = Directory(filePathMp3);
   String mp3Path = dir.toString();
   List<FileSystemEntity> _files;
   List<FileSystemEntity> files = [];
   String path = "";
 
   _files = dir.listSync(recursive: true, followLinks: true);
+  // var a = readMata(filePathMp3);
+  // print(a);
   for (FileSystemEntity entity in _files) {
     String path = entity.path;
     if (path.endsWith('.mp3')) {
-      files.add(entity);
+      playList.add(path);
     }
+  }
+  if (playList.isEmpty) {
+    return playList;
   }
 
   for (FileSystemEntity f in files) {
@@ -25,6 +33,7 @@ List<String> getPlayListLocal() {
     path = path.replaceAll("'", "");
     playList.add(path);
   }
+  readMata(playList[0]);
   return playList;
 }
 

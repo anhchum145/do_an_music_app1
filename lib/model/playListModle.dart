@@ -6,12 +6,14 @@ class playListModle {
   List<SongModel> listSong;
   String id;
   String pic;
+  bool mode;
 
   playListModle(
       {required this.name,
       required this.listSong,
       required this.id,
-      required this.pic});
+      required this.pic,
+      required this.mode});
 
   // factory playListModle.fromFirestore(
   //   DocumentSnapshot<Map<String, dynamic>> snapshot,

@@ -27,8 +27,8 @@ String idGenerator() {
 }
 
 playListModle getPlayListModle() {
-  playListModle play =
-      new playListModle(name: "ndv", listSong: [], id: "ndv", pic: "");
+  playListModle play = new playListModle(
+      name: "ndv", listSong: [], id: "ndv", pic: "", mode: true);
   List<String> ds = getFullSong();
   List<String> link = [];
   getListSongFromFireBase().then((value) {
@@ -77,7 +77,7 @@ metaDataUp() async {
   }
 }
 
-readListAlbum() async {
+Future<List<Map<String, String>>> readListAlbum() async {
   final docr = await FirebaseFirestore.instance.collection("playlist").get();
   Map<String, String> a = new Map();
   List<Map<String, String>> l = [];
@@ -87,7 +87,11 @@ readListAlbum() async {
     final docInfo = await docRef.collection("info").doc("info").get();
     final infodata = docInfo.data() as Map<String, dynamic>;
     a = new Map();
-    a.addAll({"name": infodata["name"], "pic": infodata["pic"]});
+    a.addAll({
+      "name": infodata["name"],
+      "pic": infodata["pic"],
+      "id": i.id.toString()
+    });
     l.add(a);
   }
 
