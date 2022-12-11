@@ -9,11 +9,15 @@ Future<playListModle> readPlayListFromStore(String id) async {
       name: '', listSong: [], id: id, pic: "pic", mode: false);
   final Future<playListModle> playFu;
   final db = FirebaseFirestore.instance;
+<<<<<<< HEAD
   db.settings = const Settings(persistenceEnabled: true);
 
   final docRef = db.collection("playlist").doc(id);
   final docInfo = await docRef.collection("info").doc("info").get();
   final infodata = docInfo.data() as Map<String, dynamic>;
+=======
+  final docRef = db. collection("playlist").doc(name);
+>>>>>>> b8fca1d46c5f8b9bea0edf0c14ebf9224d6bd813
   var map = new Map<String, dynamic>();
   await docRef.get().then(
     (DocumentSnapshot doc) {

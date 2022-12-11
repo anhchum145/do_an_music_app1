@@ -3,8 +3,11 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
+<<<<<<< HEAD
   flutter_media_metadata
   permission_handler_windows
+=======
+>>>>>>> b8fca1d46c5f8b9bea0edf0c14ebf9224d6bd813
 )
 
 list(APPEND FLUTTER_FFI_PLUGIN_LIST
