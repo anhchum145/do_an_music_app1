@@ -12,4 +12,15 @@ class MyStream {
   void dispose() {
     albumController.close();
   }
+
+  StreamController connectController = new StreamController<bool>.broadcast();
+  Stream get connectStream => albumController.stream;
+
+  void incrementConnect(bool state) {
+    albumController.sink.add(album);
+  }
+
+  void disposeConnect() {
+    albumController.close();
+  }
 }

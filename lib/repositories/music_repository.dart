@@ -45,9 +45,25 @@ bool getAPlayList(
 
   for (SongModel s in play.listSong) {
     if (mode) {
-      paths.add(Audio.file(s.path));
+      paths.add(
+        Audio.file(
+          s.path,
+          metas: Metas(
+            title: s.name,
+            artist: s.artist,
+          ),
+        ),
+      );
     } else {
-      paths.add(Audio.network(s.linkSong));
+      paths.add(
+        Audio.network(
+          s.linkSong,
+          metas: Metas(
+            title: s.name,
+            artist: s.artist,
+          ),
+        ),
+      );
     }
   }
   assetsAudioPlayer.open(

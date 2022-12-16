@@ -1,45 +1,34 @@
 import 'dart:io';
-import 'dart:isolate';
-import 'dart:math';
-import 'dart:ui';
 
 import 'package:assets_audio_player/assets_audio_player.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:do_an_music_app1/model/getPlayList.dart';
-import 'package:do_an_music_app1/model/playListModle.dart';
-import 'package:do_an_music_app1/model/songModel.dart';
-import 'package:do_an_music_app1/repositories/download.dart';
-import 'package:do_an_music_app1/repositories/music_repository.dart';
 import 'package:do_an_music_app1/repositories/readFromFirestore.dart';
-import 'package:do_an_music_app1/repositories/service.dart';
-import 'package:do_an_music_app1/repositories/write_db.dart';
-import 'package:do_an_music_app1/views/appbar.dart';
-import 'package:do_an_music_app1/views/homeScreen.dart';
-import 'package:do_an_music_app1/views/player_bar.dart';
+import 'package:do_an_music_app1/repositories/save_name_index.dart';
 import 'package:do_an_music_app1/views/song2.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
-import 'package:flutter_media_metadata/flutter_media_metadata.dart';
-import 'package:id3/id3.dart';
+import 'package:internet_connection_checker/internet_connection_checker.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:provider/provider.dart';
 
 Future<void> main() async {
   // await Firebase.initializeApp(
   //   options: DefaultFirebaseOptions.currentPlatform,
   // );
+
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   await FirebaseAppCheck.instance.activate(
-    androidDebugProvider: true,
+    androidProvider: AndroidProvider.debug,
   );
   final assetsAudioPlayer = AssetsAudioPlayer.withId("0");
   // playListModle play = new playListModle(name: "ndv", listSong: []);
-
+  // await FirebaseAuth.instance.signOut();
   // //ghiallsong
-  WidgetsFlutterBinding.ensureInitialized();
 
   // // Plugin must be initialized before using
   await FlutterDownloader.initialize(
@@ -48,17 +37,17 @@ Future<void> main() async {
       ignoreSsl:
           true // option: set to false to disable working with http links (default: false)
       );
+  final user = FirebaseAuth.instance.currentUser;
+  List<String> listLove = [];
+  if (user != null) {
+    listLove = await readListLoveStore(user.email.toString());
+  }
 
   //await metaDataUp();
   //--upic
   // final storage = FirebaseStorage.instance.ref();
   // final storageFolder = storage.child("/pic/cover");
   // final listResult = await storageFolder.listAll();
-  var status = await Permission.manageExternalStorage.status;
-  if (status.isDenied) {
-    print("Không có quyênnnnnnnnnnnnnnnnnnnn");
-  }
-
   // playListModle p;
   // await readPlayListFromStore("trehot").then(
   //   (value) async {
@@ -83,22 +72,21 @@ Future<void> main() async {
   // });
   //await WritePlay();
   // await getPlayListLocal().then((value) => print(value));
-
-  runApp(MyApp(assetsAudioPlayer));
-
+  runApp(MyApp(listLove, assetsAudioPlayer));
   // await readPlayListFromStore("full").then((value) {
   //   return value;
   // });
 }
 
 class MyApp extends StatelessWidget {
-  MyApp(this.assetsAudioPlayer);
+  MyApp(this.listLove, this.assetsAudioPlayer);
   final AssetsAudioPlayer assetsAudioPlayer;
+  final List<String> listLove;
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       theme: ThemeData(brightness: Brightness.dark),
-      home: ListSong(assetsAudioPlayer),
+      home: ListSong(listLove, assetsAudioPlayer),
     );
     //HomePage(
     //mode: false, index: 0, assetsAudioPlayer: assetsAudioPlayer);

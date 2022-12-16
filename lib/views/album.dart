@@ -37,7 +37,7 @@ List<Card> _buildGridCards(int count, List<Map<String, String>> list,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              SizedBox(
+              const SizedBox(
                 height: 20,
               ),
               AspectRatio(
@@ -50,7 +50,7 @@ List<Card> _buildGridCards(int count, List<Map<String, String>> list,
                     loadingBuilder: (context, child, loadingProgress) =>
                         (loadingProgress == null)
                             ? child
-                            : CircularProgressIndicator(strokeWidth: 1.0),
+                            : const CircularProgressIndicator(strokeWidth: 1.0),
                     errorBuilder: (context, error, stackTrace) =>
                         Image.asset("assets/cover.png"),
                   ),

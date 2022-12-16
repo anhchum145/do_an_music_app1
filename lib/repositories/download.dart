@@ -37,7 +37,7 @@ Future<playListModle> getPlaylistDowloaded() async {
   int i = 0;
   for (String path in listPath) {
     var meta = readMata(path);
-    SongModel song = new SongModel(
+    SongModel song = SongModel(
         id: i.toString(),
         linkSong: '',
         path: path,
@@ -48,4 +48,14 @@ Future<playListModle> getPlaylistDowloaded() async {
     i++;
   }
   return play;
+}
+
+Future<void> deleteFile(File file) async {
+  try {
+    if (await file.exists()) {
+      await file.delete();
+    }
+  } catch (e) {
+    // Error in getting access to the file.
+  }
 }

@@ -7,7 +7,7 @@ import 'package:path_provider/path_provider.dart';
 Future<List<String>> getPlayListLocal() async {
   List<String> playList = [];
   final appDocDir = await getExternalStorageDirectory();
-  final filePathMp3 = "${appDocDir!.path}";
+  final filePathMp3 = appDocDir!.path;
 
   Directory dir = Directory(filePathMp3);
   String mp3Path = dir.toString();

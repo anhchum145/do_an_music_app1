@@ -1,41 +1,39 @@
-// ignore_for_file: prefer_const_constructors
-
-import 'dart:io';
 import 'dart:isolate';
-import 'dart:math';
 import 'dart:ui';
 
 import 'package:assets_audio_player/assets_audio_player.dart';
 import 'package:do_an_music_app1/model/playListModle.dart';
 import 'package:do_an_music_app1/repositories/StreamAlbum.dart';
 import 'package:do_an_music_app1/repositories/download.dart';
-import 'package:do_an_music_app1/repositories/music_repository.dart';
 import 'package:do_an_music_app1/repositories/service.dart';
 import 'package:do_an_music_app1/views/album.dart';
 import 'package:do_an_music_app1/views/listSong.dart';
-
-import 'package:do_an_music_app1/views/menu.dart';
 import 'package:do_an_music_app1/views/player_bar.dart';
 import 'package:do_an_music_app1/views/playingScreen.dart';
-import 'package:flutter/foundation.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:group_button/group_button.dart';
+import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:miniplayer/miniplayer.dart';
+import '../repositories/loginStateStream.dart';
 import '../repositories/readFromFirestore.dart';
 import 'appbar.dart';
 
 // ignore: must_be_immutable
 class ListSong extends StatefulWidget {
-  ListSong(this.assetsAudioPlayer);
+  const ListSong(this.listLove, this.assetsAudioPlayer, {super.key});
   final AssetsAudioPlayer assetsAudioPlayer;
+  final List<String> listLove;
+
   @override
-  State<ListSong> createState() => _ListSongState(this.assetsAudioPlayer);
+  State<ListSong> createState() => _ListSongState(listLove, assetsAudioPlayer);
 }
 
 class _ListSongState extends State<ListSong> {
-  _ListSongState(this.assetsAudioPlayer);
+  _ListSongState(this.listLove, this.assetsAudioPlayer);
   int indexScreen = 0;
+  playListModle? playApbar;
   ValueNotifier<int> valueNotifierIndexScreen = ValueNotifier(0);
   ValueNotifier<String> valueNotifierAlbum = ValueNotifier("full");
   ValueNotifier<bool> valueNotifierIndexSong = ValueNotifier(false);
@@ -43,9 +41,14 @@ class _ListSongState extends State<ListSong> {
   final AssetsAudioPlayer assetsAudioPlayer;
   playListModle? playList;
   playListModle? playListOffline;
+  playListModle? playListLove;
+  List<String> listLove;
   List<Map<String, String>> albumList = [];
+  LoginStream loginStream = LoginStream();
+  bool isConnect = true;
   MyStream streamAlbum = MyStream();
   final ReceivePort _port = ReceivePort();
+  var userEmail = FirebaseAuth.instance.currentUser;
   @pragma('vm:entry-point')
   static void downloadCallback(
       String id, DownloadTaskStatus status, int progress) {
@@ -63,6 +66,72 @@ class _ListSongState extends State<ListSong> {
   @override
   void initState() {
     super.initState();
+    if (!isConnect) {
+      valueNotifierIndexScreen.value = 2;
+    } else {
+      streamAlbum.albumStream.listen((event) {
+        valueNotifierAlbum.value = event;
+        playList = null;
+        valueNotifierIndexScreen.value = 0;
+      });
+      assetsAudioPlayer.current.listen((event) {
+        if (event != null) {
+          valueNotifierIndexSong.value = true;
+        }
+      });
+      loginStream.loginStream.listen(
+        (event) {
+          setState(
+            () async {
+              userEmail = FirebaseAuth.instance.currentUser;
+
+              valueNotifierIndexScreen.value = 10;
+              playListLove = null;
+              if (userEmail != null) {
+                listLove = await readListLoveStore(userEmail!.email.toString());
+                valueNotifierIndexScreen.value = 0;
+
+                setState(() {});
+              } else {
+                listLove = [];
+                valueNotifierIndexScreen.value = 0;
+                setState(() {});
+              }
+            },
+          );
+        },
+      );
+      InternetConnectionChecker().onStatusChange.listen((status) {
+        switch (status) {
+          case InternetConnectionStatus.connected:
+            if (!isConnect) {
+              setState(() {
+                isConnect = true;
+              });
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text("Thiết bị hiện có kết nối Internet!"),
+                ),
+              );
+            }
+            break;
+          case InternetConnectionStatus.disconnected:
+            setState(() {
+              {
+                if (isConnect) isConnect = false;
+              }
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text(
+                      "Thiết bị hiện không có kết nối Internet!\nKhông thể nghe online!"),
+                ),
+              );
+              // controller.disableIndexes([]);
+            });
+            break;
+        }
+      });
+    }
     IsolateNameServer.registerPortWithName(
         _port.sendPort, 'downloader_send_port');
     _port.listen((dynamic data) {
@@ -71,38 +140,38 @@ class _ListSongState extends State<ListSong> {
       int progress = data[2];
       setState(() {});
     });
-    streamAlbum.albumStream.listen((event) {
-      valueNotifierAlbum.value = event;
-      playList = null;
-      valueNotifierIndexScreen.value = 3;
-    });
-    assetsAudioPlayer.current.listen((event) {
-      if (event != null) {
-        valueNotifierIndexSong.value = true;
-      }
-    });
-    getPlaylistDowloaded().then((value) => playListOffline = value);
 
+    getPlaylistDowloaded().then((value) => playListOffline = value);
+    readPlayListFromStore(userEmail.toString(), true)
+        .then((value) => playListLove = value);
     FlutterDownloader.registerCallback(downloadCallback);
   }
 
   @override
   Widget build(BuildContext context) {
+    GroupButtonController controller = GroupButtonController();
+    int selectedIndex = valueNotifierIndexScreen.value;
+    Function onTap() {
+      return () => setState(() {});
+    }
+
+    controller.selectIndex(isConnect ? valueNotifierIndexScreen.value : 2);
     return Scaffold(
       extendBodyBehindAppBar: true,
-      appBar: appBar("Music"),
+      appBar: appBar(context, "Music", streamAlbum, loginStream),
       body: Stack(
         children: [
           Column(
             children: [
               Container(
-                padding: EdgeInsets.only(top: 80),
+                padding: const EdgeInsets.only(top: 80),
                 height: 150,
                 child: GroupButton(
+                  controller: controller,
                   isRadio: true,
-                  buttons: const ["Home", "Album", "Download"],
+                  buttons: const ["Home", "Album", "Download", "Yêu thích"],
                   options: GroupButtonOptions(
-                    spacing: 50,
+                    spacing: 10,
                     selectedShadow: const [],
                     selectedColor: Colors.black,
                     unselectedShadow: const [],
@@ -113,6 +182,14 @@ class _ListSongState extends State<ListSong> {
                     borderRadius: BorderRadius.circular(30),
                   ),
                   onSelected: (val, i, selected) {
+                    if (!isConnect) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                              "Thiết bị hiện không có kết nối Internet!\nKhông thể nghe online!"),
+                        ),
+                      );
+                    }
                     print(i);
                     if (i == 1) {
                       valueNotifierIndexScreen.value = 1;
@@ -123,32 +200,54 @@ class _ListSongState extends State<ListSong> {
                     if (i == 0) {
                       valueNotifierIndexScreen.value = 0;
                     }
+                    if (i == 3) valueNotifierIndexScreen.value = 3;
                   },
                 ),
               ),
               ValueListenableBuilder(
                 valueListenable: valueNotifierIndexScreen,
                 builder: (context, value, child) {
+                  if (!isConnect) {
+                    controller.disableIndexes([
+                      0,
+                      1,
+                      3,
+                    ]);
+                    controller.selectIndex(2);
+                    value = 2;
+                  } else {
+                    controller.disableIndexes([]);
+                  }
                   switch (value) {
                     case 0:
                       {
                         if (playList != null) {
+                          playApbar = playList;
                           playList!.mode = false;
-                          return ListSongg(
-                              playList!, assetsAudioPlayer, playListOffline!);
+                          return ListSongg(playList!, assetsAudioPlayer,
+                              playListOffline!, listLove, false, () {
+                            setState(() {});
+                          });
                         } else {
                           return ValueListenableBuilder(
                             valueListenable: valueNotifierAlbum,
                             builder: (context, value, child) {
                               return FutureBuilder(
-                                future: readPlayListFromStore(value.toString()),
+                                future: readPlayListFromStore(
+                                    value.toString(), false),
                                 builder: (context, snapshot) {
                                   if (snapshot.hasData) {
                                     playList = snapshot.data as playListModle;
-                                    return ListSongg(playList!,
-                                        assetsAudioPlayer, playListOffline!);
+                                    playApbar = playList;
+                                    return ListSongg(
+                                        playList!,
+                                        assetsAudioPlayer,
+                                        playListOffline!,
+                                        listLove,
+                                        false,
+                                        onTap());
                                   } else {
-                                    return Center(
+                                    return const Center(
                                       child: CircularProgressIndicator(
                                         backgroundColor: Colors.cyanAccent,
                                         valueColor:
@@ -175,12 +274,13 @@ class _ListSongState extends State<ListSong> {
                               if (snapshot.hasData) {
                                 albumList =
                                     snapshot.data as List<Map<String, String>>;
+
                                 return AlbumWidget(
                                     snapshot.data as List<Map<String, String>>,
                                     context,
                                     streamAlbum);
                               } else {
-                                return Center(
+                                return const Center(
                                   child: CircularProgressIndicator(
                                     backgroundColor: Colors.cyanAccent,
                                     valueColor: AlwaysStoppedAnimation<Color>(
@@ -202,11 +302,18 @@ class _ListSongState extends State<ListSong> {
                               future: getPlaylistDowloaded(),
                               builder: (context, snapshot) {
                                 if (snapshot.data != null) {
-                                  playList!.mode = true;
+                                  playApbar = playListOffline;
+
+                                  if (playList != null) playList!.mode = true;
                                   playListOffline =
                                       snapshot.data as playListModle;
-                                  return ListSongg(playListOffline!,
-                                      assetsAudioPlayer, playListOffline!);
+                                  return ListSongg(
+                                      playListOffline!,
+                                      assetsAudioPlayer,
+                                      playListOffline!,
+                                      listLove,
+                                      false,
+                                      onTap());
                                 } else {
                                   return Center(
                                     child: Text("Chưa có bài hát được tải!!"),
@@ -220,29 +327,42 @@ class _ListSongState extends State<ListSong> {
                       break;
                     case 3:
                       {
-                        return ValueListenableBuilder(
-                          valueListenable: valueNotifierAlbum,
-                          builder: (context, value, child) {
-                            return FutureBuilder(
-                              future: readPlayListFromStore(value.toString()),
-                              builder: (context, snapshot) {
-                                if (snapshot.hasData) {
-                                  playList = snapshot.data as playListModle;
-                                  return ListSongg(playList!, assetsAudioPlayer,
-                                      playListOffline!);
-                                } else {
-                                  return Center(
-                                    child: CircularProgressIndicator(
-                                      backgroundColor: Colors.cyanAccent,
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                          Colors.red),
-                                    ),
-                                  );
-                                }
-                              },
-                            );
-                          },
-                        );
+                        if (userEmail != null) {
+                          return FutureBuilder(
+                            future: readPlayListFromStore(
+                                userEmail!.email.toString(), true),
+                            builder: (context, snapshot) {
+                              if (snapshot.hasData) {
+                                playListLove = snapshot.data as playListModle;
+                                return playListLove!.listSong.isNotEmpty
+                                    ? ListSongg(
+                                        playListLove!,
+                                        assetsAudioPlayer,
+                                        playListOffline!,
+                                        listLove,
+                                        true,
+                                        onTap())
+                                    : const Center(
+                                        child: Text(
+                                            "Bạn chưa có bài hát yêu thích nào!"),
+                                      );
+                                ;
+                              } else {
+                                return const Center(
+                                  child: CircularProgressIndicator(
+                                    backgroundColor: Colors.cyanAccent,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.red),
+                                  ),
+                                );
+                              }
+                            },
+                          );
+                        } else {
+                          return const Center(
+                            child: Text("Đăng nhập để sửa dụng chức năng"),
+                          );
+                        }
                       }
                       break;
 
@@ -252,14 +372,19 @@ class _ListSongState extends State<ListSong> {
                           future: getPlaylistDowloaded(),
                           builder: (context, snapshot1) {
                             if (snapshot1.hasData) {
-                              return ListSongg(snapshot1.data as playListModle,
-                                  assetsAudioPlayer, playListOffline!);
+                              return ListSongg(
+                                  snapshot1.data as playListModle,
+                                  assetsAudioPlayer,
+                                  playListOffline!,
+                                  listLove,
+                                  false,
+                                  onTap());
                             } else {
-                              return Center(
+                              return const Center(
                                 child: CircularProgressIndicator(
                                   backgroundColor: Colors.cyanAccent,
-                                  valueColor: new AlwaysStoppedAnimation<Color>(
-                                      Colors.red),
+                                  valueColor:
+                                      AlwaysStoppedAnimation<Color>(Colors.red),
                                 ),
                               );
                             }
@@ -270,18 +395,16 @@ class _ListSongState extends State<ListSong> {
                   }
                 },
               ),
-              // Row(
-              //   children: [
-              //     Expanded(child: PlayerBar(context, assetsAudioPlayer, playList))
-              //   ],
-              // )
             ],
           ),
           ValueListenableBuilder(
             valueListenable: valueNotifierIndexSong,
             builder: (context, value, child) {
               if (value == true) {
-                int index = assetsAudioPlayer.current.value!.index;
+                int index = 0;
+                if (assetsAudioPlayer != null) {
+                  index = assetsAudioPlayer.current.value!.index;
+                }
                 return Miniplayer(
                   minHeight: 50,
                   maxHeight: MediaQuery.of(context).size.height,
@@ -300,8 +423,7 @@ class _ListSongState extends State<ListSong> {
                         height > 50) {
                       return SizedBox();
                     } else {
-                      return PlayerBar(context, assetsAudioPlayer,
-                          playList!.mode ? playListOffline : playList);
+                      return PlayerBar(context, assetsAudioPlayer, playApbar);
                     }
                   },
                 );
@@ -313,13 +435,5 @@ class _ListSongState extends State<ListSong> {
         ],
       ),
     );
-  }
-}
-
-double heigtValue(bool i) {
-  if (i == true) {
-    return 50;
-  } else {
-    return 700;
   }
 }

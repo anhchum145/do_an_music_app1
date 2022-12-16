@@ -55,12 +55,12 @@ Widget PlayerBar(
         ),
 
         // Padding between first 2 columns and Icons
-        Expanded(child: SizedBox.expand()),
+        const Expanded(child: SizedBox.expand()),
 
         //
         // Play button and progress indicator
         //
-        Container(
+        SizedBox(
           width: 40,
           height: 40,
           child: GestureDetector(

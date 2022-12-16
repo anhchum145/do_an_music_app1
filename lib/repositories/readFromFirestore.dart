@@ -4,39 +4,53 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:do_an_music_app1/model/playListModle.dart';
 import '../model/songModel.dart';
 
-Future<playListModle> readPlayListFromStore(String id) async {
-  playListModle play = new playListModle(
-      name: '', listSong: [], id: id, pic: "pic", mode: false);
-  final Future<playListModle> playFu;
+Future<playListModle> readPlayListFromStore(String id, bool isLove) async {
+  playListModle play =
+      playListModle(name: '', listSong: [], id: id, pic: "pic", mode: false);
   final db = FirebaseFirestore.instance;
-<<<<<<< HEAD
   db.settings = const Settings(persistenceEnabled: true);
 
-  final docRef = db.collection("playlist").doc(id);
-  final docInfo = await docRef.collection("info").doc("info").get();
-  final infodata = docInfo.data() as Map<String, dynamic>;
-=======
-  final docRef = db. collection("playlist").doc(name);
->>>>>>> b8fca1d46c5f8b9bea0edf0c14ebf9224d6bd813
-  var map = new Map<String, dynamic>();
-  await docRef.get().then(
-    (DocumentSnapshot doc) {
-      final data = doc.data() as Map<String, dynamic>;
-      map = data;
-    },
-    onError: (e) => print("Error getting document: $e"),
-  );
-  final List<SongModel> l = [];
-  String list = jsonEncode(map);
-  play.name = infodata["name"];
-  play.pic = infodata["pic"];
-  print(list);
-  await Future.forEach(map.entries, (MapEntry m) async {
-    var b = !m.key.toString().contains("name");
+  final docRef = db.collection(isLove ? "user" : "playlist").doc(id);
+  if (!isLove) {
+    final docInfo = await docRef.collection("info").doc("info").get();
+    final infodata = docInfo.data() as Map<String, dynamic>;
 
-    await readSongFromStore(m.value.toString())
-        .then((value) => play.listSong.add(value));
-  });
+    var map = <String, dynamic>{};
+    await docRef.get().then(
+      (DocumentSnapshot doc) {
+        final data = doc.data() as Map<String, dynamic>;
+        map = data;
+      },
+      onError: (e) => print("Error getting document: $e"),
+    );
+    final List<SongModel> l = [];
+    play.name = infodata["name"];
+    play.pic = infodata["pic"];
+    await Future.forEach(map.entries, (MapEntry m) async {
+      var b = !m.key.toString().contains("name");
+
+      await readSongFromStore(m.value.toString())
+          .then((value) => play.listSong.add(value));
+    });
+  } else {
+    var map = <String, dynamic>{};
+    await docRef.get().then(
+      (DocumentSnapshot doc) {
+        final data = doc.data() as Map<String, dynamic>;
+        map = data;
+      },
+      onError: (e) => print("Error getting document: $e"),
+    );
+    final List<SongModel> l = [];
+    play.name = "Yêu thích";
+    play.pic = "";
+    await Future.forEach(map.entries, (MapEntry m) async {
+      var b = !m.key.toString().contains("name");
+
+      await readSongFromStore(m.value.toString())
+          .then((value) => play.listSong.add(value));
+    });
+  }
   // map.forEach(
   //   (key, value) async {},
   // );
@@ -67,4 +81,20 @@ Future<SongModel> readSongFromStore(String id) async {
       artist: map['artist'],
       name: map['name'],
       coverlink: map['coverlink']);
+}
+
+Future<List<String>> readListLoveStore(String user) async {
+  List<String> a = [];
+  final db = FirebaseFirestore.instance;
+  var nummers = await db.collection("user").doc(user).get().then(
+    (DocumentSnapshot doc) {
+      final data = doc.data() as Map<String, dynamic>;
+      data.forEach(
+        (key, value) {
+          a.add(value);
+        },
+      );
+    },
+  );
+  return a;
 }
