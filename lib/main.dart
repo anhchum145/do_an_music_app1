@@ -1,19 +1,13 @@
 import 'dart:io';
 
 import 'package:assets_audio_player/assets_audio_player.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:do_an_music_app1/repositories/readFromFirestore.dart';
-import 'package:do_an_music_app1/repositories/save_name_index.dart';
 import 'package:do_an_music_app1/views/song2.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
-import 'package:internet_connection_checker/internet_connection_checker.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:provider/provider.dart';
 
 Future<void> main() async {
   // await Firebase.initializeApp(
@@ -79,7 +73,7 @@ Future<void> main() async {
 }
 
 class MyApp extends StatelessWidget {
-  MyApp(this.listLove, this.assetsAudioPlayer);
+  const MyApp(this.listLove, this.assetsAudioPlayer, {super.key});
   final AssetsAudioPlayer assetsAudioPlayer;
   final List<String> listLove;
   @override

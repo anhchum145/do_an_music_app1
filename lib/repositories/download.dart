@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:audiotagger/audiotagger.dart';
 import 'package:do_an_music_app1/main.dart';
 import 'package:do_an_music_app1/model/getPlayList.dart';
 import 'package:do_an_music_app1/model/playListModle.dart';

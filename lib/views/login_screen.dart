@@ -89,9 +89,11 @@ class LoginScreen extends StatelessWidget {
         Navigator.pop(context, true);
       },
       messages: LoginMessages(confirmSignupSuccess: "Đăng nhập thành công"),
-      savedEmail: emailSave ?? "",
-      savedPassword: passSave ?? "",
-      onRecoverPassword: (String) {},
+      savedEmail: emailSave,
+      savedPassword: passSave,
+      onRecoverPassword: (String) {
+        return null;
+      },
     );
   }
 }
